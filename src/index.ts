@@ -1,11 +1,11 @@
 import { API } from 'homebridge';
 
-import { PLATFORM_NAME } from './settings';
-import { ExampleHomebridgePlatform } from './platform';
+import { PLUGIN_NAME, PLATFORM_NAME } from './settings';
+import { EspHomeDoorbellPlatform } from './platform';
 
 /**
  * This method registers the platform with Homebridge
  */
 export = (api: API) => {
-  api.registerPlatform(PLATFORM_NAME, ExampleHomebridgePlatform);
+  api.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, EspHomeDoorbellPlatform);
 };

@@ -1,54 +1,54 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
+import { EspHomeDoorbellPlatform, IEsphomePlatformDevice } from './platform';
+import { EspHomeWebApi, EspHomeStateEventData } from './esphome_webapi';
 
-import { ExampleHomebridgePlatform } from './platform';
+export interface DoorbellAccessoryContext {
+  device: IEsphomePlatformDevice;
+}
 
 /**
  * Platform Accessory
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class ExamplePlatformAccessory {
+export class DoorbellAccessory {
   private service: Service;
-
-  /**
-   * These are just used to create a working example
-   * You should implement your own code to track the state of your accessory
-   */
-  private exampleStates = {
-    On: false,
-    Brightness: 100,
-  };
+  private espHomeWebApi: EspHomeWebApi;
 
   constructor(
-    private readonly platform: ExampleHomebridgePlatform,
-    private readonly accessory: PlatformAccessory,
+    private readonly platform: EspHomeDoorbellPlatform,
+    private readonly accessory: PlatformAccessory<DoorbellAccessoryContext>
   ) {
+
+    this.espHomeWebApi = new EspHomeWebApi(accessory.context.device.host, accessory.context.device.port!);
 
     // set accessory information
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
-      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Default-Manufacturer')
-      .setCharacteristic(this.platform.Characteristic.Model, 'Default-Model')
-      .setCharacteristic(this.platform.Characteristic.SerialNumber, 'Default-Serial');
+      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'EspHome')
+      .setCharacteristic(this.platform.Characteristic.Model, 'ESP8266')
+      .setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
 
-    // get the LightBulb service if it exists, otherwise create a new LightBulb service
+    // get the Doorbell service if it exists, otherwise create a new Doorbell service
     // you can create multiple services for each accessory
-    this.service = this.accessory.getService(this.platform.Service.Lightbulb) || this.accessory.addService(this.platform.Service.Lightbulb);
+    this.service = this.accessory.getService(this.platform.Service.Doorbell) || this.accessory.addService(this.platform.Service.Doorbell);
 
-    // set the service name, this is what is displayed as the default name on the Home app
-    // in this example we are using the name we stored in the `accessory.context` in the `discoverDevices` method.
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.exampleDisplayName);
+    // // set the service name, this is what is displayed as the default name on the Home app
+    // // in this example we are using the name we stored in the `accessory.context` in the `discoverDevices` method.
+    // this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
+
+    this.espHomeWebApi.stateEvent((event: EspHomeStateEventData) => this.handleEvent(event));
 
     // each service must implement at-minimum the "required characteristics" for the given service type
     // see https://developers.homebridge.io/#/service/Lightbulb
 
     // register handlers for the On/Off Characteristic
-    this.service.getCharacteristic(this.platform.Characteristic.On)
-      .onSet(this.setOn.bind(this))                // SET - bind to the `setOn` method below
-      .onGet(this.getOn.bind(this));               // GET - bind to the `getOn` method below
+    // this.service.getCharacteristic(this.platform.Characteristic.On)
+    //   .onSet(this.setOn.bind(this))                // SET - bind to the `setOn` method below
+    //   .onGet(this.getOn.bind(this));               // GET - bind to the `getOn` method below
 
-    // register handlers for the Brightness Characteristic
-    this.service.getCharacteristic(this.platform.Characteristic.Brightness)
-      .onSet(this.setBrightness.bind(this));       // SET - bind to the 'setBrightness` method below
+    // // register handlers for the Brightness Characteristic
+    // this.service.getCharacteristic(this.platform.Characteristic.Brightness)
+    //   .onSet(this.setBrightness.bind(this));       // SET - bind to the 'setBrightness` method below
 
     /**
      * Creating multiple services of the same type.
@@ -62,11 +62,11 @@ export class ExamplePlatformAccessory {
      */
 
     // Example: add two "motion sensor" services to the accessory
-    const motionSensorOneService = this.accessory.getService('Motion Sensor One Name') ||
-      this.accessory.addService(this.platform.Service.MotionSensor, 'Motion Sensor One Name', 'YourUniqueIdentifier-1');
+    // const motionSensorOneService = this.accessory.getService('Motion Sensor One Name') ||
+    //   this.accessory.addService(this.platform.Service.MotionSensor, 'Motion Sensor One Name', 'YourUniqueIdentifier-1');
 
-    const motionSensorTwoService = this.accessory.getService('Motion Sensor Two Name') ||
-      this.accessory.addService(this.platform.Service.MotionSensor, 'Motion Sensor Two Name', 'YourUniqueIdentifier-2');
+    // const motionSensorTwoService = this.accessory.getService('Motion Sensor Two Name') ||
+    //   this.accessory.addService(this.platform.Service.MotionSensor, 'Motion Sensor Two Name', 'YourUniqueIdentifier-2');
 
     /**
      * Updating characteristics values asynchronously.
@@ -77,18 +77,29 @@ export class ExamplePlatformAccessory {
      * the `updateCharacteristic` method.
      *
      */
-    let motionDetected = false;
-    setInterval(() => {
-      // EXAMPLE - inverse the trigger
-      motionDetected = !motionDetected;
+    // let motionDetected = false;
+    // setInterval(() => {
+    //   // EXAMPLE - inverse the trigger
+    //   motionDetected = !motionDetected;
 
-      // push the new value to HomeKit
-      motionSensorOneService.updateCharacteristic(this.platform.Characteristic.MotionDetected, motionDetected);
-      motionSensorTwoService.updateCharacteristic(this.platform.Characteristic.MotionDetected, !motionDetected);
+    //   // push the new value to HomeKit
+    //   motionSensorOneService.updateCharacteristic(this.platform.Characteristic.MotionDetected, motionDetected);
+    //   motionSensorTwoService.updateCharacteristic(this.platform.Characteristic.MotionDetected, !motionDetected);
 
-      this.platform.log.debug('Triggering motionSensorOneService:', motionDetected);
-      this.platform.log.debug('Triggering motionSensorTwoService:', !motionDetected);
-    }, 10000);
+    //   this.platform.log.debug('Triggering motionSensorOneService:', motionDetected);
+    //   this.platform.log.debug('Triggering motionSensorTwoService:', !motionDetected);
+    // }, 10000);
+  }
+
+  private handleEvent(event: EspHomeStateEventData) {
+    if (event.id === 'binary_sensor-doorbell_button') {
+      this.platform.log.debug(`[ES][${this.accessory.context.device.name}] State event:`, event);
+      if (event.value) {
+        this.platform.log.info('Doorbell activated');
+        this.service.getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
+          .updateValue(this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
+      }
+    }
   }
 
   /**
@@ -97,7 +108,7 @@ export class ExamplePlatformAccessory {
    */
   async setOn(value: CharacteristicValue) {
     // implement your own code to turn your device on/off
-    this.exampleStates.On = value as boolean;
+    //this.exampleStates.On = value as boolean;
 
     this.platform.log.debug('Set Characteristic On ->', value);
   }
@@ -117,14 +128,14 @@ export class ExamplePlatformAccessory {
    */
   async getOn(): Promise<CharacteristicValue> {
     // implement your own code to check if the device is on
-    const isOn = this.exampleStates.On;
+    //const isOn = this.exampleStates.On;
 
-    this.platform.log.debug('Get Characteristic On ->', isOn);
+    this.platform.log.debug('Get Characteristic On ->', true);
 
     // if you need to return an error to show the device as "Not Responding" in the Home app:
     // throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
 
-    return isOn;
+    return true;
   }
 
   /**
@@ -133,7 +144,7 @@ export class ExamplePlatformAccessory {
    */
   async setBrightness(value: CharacteristicValue) {
     // implement your own code to set the brightness
-    this.exampleStates.Brightness = value as number;
+    //this.exampleStates.Brightness = value as number;
 
     this.platform.log.debug('Set Characteristic Brightness -> ', value);
   }
