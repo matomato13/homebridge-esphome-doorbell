@@ -16,9 +16,9 @@
                         "type": "string"
                     },
                     "name": {
-                      "name": "Name",
-                      "type": "string",
-                      "required": false
+                        "name": "Name",
+                        "type": "string",
+                        "required": false
                     },
                     "port": {
                         "name": "Port",
@@ -51,6 +51,7 @@
                 "key": "devices",
                 "items": [
                     "devices[].host",
+                    "devices[].name",
                     "devices[].port",
                     "devices[].password"
                 ]
