@@ -20,7 +20,8 @@ export class EspHomeDoorbellPlatform implements DynamicPlatformPlugin {
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
 
   // this is used to track restored cached accessories
-  public readonly accessoriesMap: Map<string, PlatformAccessory<DoorbellAccessoryContext>> = new Map<string, PlatformAccessory<DoorbellAccessoryContext>>();
+  public readonly accessoriesMap: Map<string, PlatformAccessory<DoorbellAccessoryContext>> =
+    new Map<string, PlatformAccessory<DoorbellAccessoryContext>>();
 
   constructor(
     public readonly log: Logger,

@@ -17,16 +17,16 @@ export class DoorbellAccessory {
 
   constructor(
     private readonly platform: EspHomeDoorbellPlatform,
-    private readonly accessory: PlatformAccessory<DoorbellAccessoryContext>
+    private readonly accessory: PlatformAccessory<DoorbellAccessoryContext>,
   ) {
 
-    this.espHomeWebApi = new EspHomeWebApi(accessory.context.device.host, accessory.context.device.port!);
+    this.espHomeWebApi = new EspHomeWebApi(this.platform.log, accessory.context.device.host, accessory.context.device.port!);
 
     // set accessory information
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'EspHome')
       .setCharacteristic(this.platform.Characteristic.Model, 'ESP8266')
-      .setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
+      .setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name!);
 
     // get the Doorbell service if it exists, otherwise create a new Doorbell service
     // you can create multiple services for each accessory

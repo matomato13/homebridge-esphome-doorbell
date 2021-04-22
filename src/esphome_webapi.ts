@@ -1,55 +1,56 @@
-import EventSource from "eventsource";
-import fetch from "node-fetch";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import EventSource from 'eventsource';
+import { Logger } from 'homebridge';
+import fetch from 'node-fetch';
 
 export interface EspHomeStateEventData {
   id: string;
   state: string;
-  value: object;
+  value: any;
 }
 
 export class EspHomeWebApi {
+  private log: Logger;
   private baseUrl: string;
   private eventSource: EventSource;
 
-  constructor(host: string, port: number) {
+  constructor(log: Logger, host: string, port: number) {
+    this.log = log;
     this.baseUrl = `http://${host}:${port}`;
     this.eventSource = new EventSource(this.baseUrl + '/events');
   }
 
   stateEvent(callback) {
-    console.log('Starting State EventSource listener on', this.eventSource.url);
+    this.log.debug('Starting State EventSource listener on', this.eventSource.url);
     this.eventSource.addEventListener('state', (e: any) => {
       try {
         const obj = JSON.parse(e.data);
         callback(obj);
-      }
-      catch (error: any) {
+      } catch (error: any) {
         callback(new Error(`Could not parse json. ${error}`));
       }
     });
   }
 
   logEvent(callback) {
-    console.log('Starting Log EventSource listener on', this.eventSource.url);
+    this.log.debug('Starting Log EventSource listener on', this.eventSource.url);
     this.eventSource.addEventListener('log', (e: any) => {
       try {
         const obj = JSON.parse(e.data);
         callback(obj);
-      }
-      catch (error) {
+      } catch (error) {
         callback(new Error(`Could not parse json. ${error}`));
       }
     });
   }
 
   pingEvent(callback) {
-    console.log('Starting Ping EventSource listener on', this.eventSource.url);
+    this.log.debug('Starting Ping EventSource listener on', this.eventSource.url);
     this.eventSource.addEventListener('ping', (e: any) => {
       try {
         const obj = JSON.parse(e.data);
         callback(obj);
-      }
-      catch (error) {
+      } catch (error) {
         callback(new Error(`Could not parse json. ${error}`));
       }
     });
@@ -57,18 +58,17 @@ export class EspHomeWebApi {
 
   async sendRequest(url, body, method, callbackSuccess, callbackError) {
     url = this.baseUrl + url;
-    console.log(`Send ${method} request [${url}]: ${body}`);
+    this.log.debug(`Send ${method} request [${url}]: ${body}`);
 
     // Device has to respond within 5 seconds
     fetch(url, { body: body, method: method, timeout: 5 * 1000 })
       .then(response => {
         const json = response.json();
-        callbackSuccess(response, json)
+        callbackSuccess(response, json);
       }, (error: any) => {
         if (error.code === 'ENOTFOUND') {
           callbackError(new Error('Could not connect to host'));
-        }
-        else {
+        } else {
           callbackError(error);
         }
       });
@@ -80,14 +80,13 @@ export class EspHomeWebApi {
         try {
           const obj = JSON.parse(body);
           callbackSuccess(response, obj);
-        }
-        catch (error) {
+        } catch (error) {
           callbackError(new Error(`Could not parse json. ${error}`));
         }
       },
       (error) => {
         callbackError(error);
-      }
+      },
     );
   }
 }
