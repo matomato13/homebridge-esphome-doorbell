@@ -1,6 +1,6 @@
 # Homebridge ESPHome Doorbell
 
-This is a Homebridge platform plugin to be used with the ($2 doorbell from Frenck)[https://frenck.dev/diy-smart-doorbell-for-just-2-dollar/].
+This is a Homebridge platform plugin to be used with the [$2 doorbell from Frenck](https://frenck.dev/diy-smart-doorbell-for-just-2-dollar/).
 It is a work in progress.
 
 ## Getting Started
