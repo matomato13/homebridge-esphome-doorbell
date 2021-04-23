@@ -24,4 +24,4 @@ port number 80 is also wired into the plugin. You can add, in theory, as many do
 that array, as long as you provide a unique name for each.
 
 ## Todo
-[ ] Add a way to toggle the chime
+- [ ] Add a way to toggle the chime
