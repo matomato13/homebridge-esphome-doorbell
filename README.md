@@ -22,3 +22,7 @@ It is a work in progress.
 Only the `host` key is mandatory under devices. As password `''` is assumed aka no password and the default
 port number 80 is also wired into the plugin. You can add, in theory, as many doorbells as you want to
 that array, as long as you provide a unique name for each.
+
+## Troubleshooting
+
+If not using HomeAssistant, the `api` line in the `doorbell.yaml` should not be present otherwise the device will restart every 5 minutes.
