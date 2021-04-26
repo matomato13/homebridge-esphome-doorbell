@@ -15,7 +15,7 @@
   "scripts": {
     "lint": "eslint src/**.ts --max-warnings=0",
     "watch": "npm run build && npm link && nodemon",
-    "build": "rimraf ./dist && npx tsc",
+    "build": "rimraf ./dist && npx tsc && xcopy /s assets dist",
     "prepublishOnly": "npm run lint && npm run build"
   },
   "files": [

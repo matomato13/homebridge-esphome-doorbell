@@ -1,7 +1,5 @@
 import {
   API,
-  AudioStreamingCodecType,
-  AudioStreamingSamplerate,
   CameraStreamingDelegate,
   H264Level,
   H264Profile,
@@ -16,6 +14,9 @@ import {
   StreamRequestCallback,
 } from 'homebridge';
 import ip from 'ip';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
 
 export class CameraSource implements CameraStreamingDelegate {
     private readonly api: API;
@@ -50,14 +51,6 @@ export class CameraSource implements CameraStreamingDelegate {
               levels: [H264Level.LEVEL3_1],
             },
           },
-          audio: {
-            codecs: [
-              {
-                type: AudioStreamingCodecType.AAC_ELD,
-                samplerate: AudioStreamingSamplerate.KHZ_16,
-              },
-            ],
-          },
         },
       });
     }
@@ -85,16 +78,35 @@ export class CameraSource implements CameraStreamingDelegate {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     handleStreamRequest(request: StreamingRequest, callback: StreamRequestCallback): void {
       this.log.debug('CameraSource handleStreamRequest');
+      callback(undefined);
     }
 
     prepareStream(request: PrepareStreamRequest, callback: PrepareStreamCallback): void {
       this.log.debug('CameraSource prepareStream called');
 
-      const currentAddress = ip.address('public', request.addressVersion);
       const response: PrepareStreamResponse = {
-        address: currentAddress,
+        address: ip.address('public', request.addressVersion),
         video: undefined,
       };
+
+      const videoInfo = request.video;
+      if (videoInfo) {
+        const targetPort = videoInfo.port;
+        const srtpKey = videoInfo.srtp_key;
+        const srtpSalt = videoInfo.srtp_salt;
+
+        // SSRC is a 32 bit integer that is unique per stream
+        const ssrcSource = crypto.randomBytes(4);
+        ssrcSource[0] = 0;
+        const ssrc = ssrcSource.readInt32BE(0);
+
+        response.video = {
+          port: targetPort,
+          ssrc: ssrc,
+          srtp_key: srtpKey,
+          srtp_salt: srtpSalt,
+        };
+      }
 
       this.log.debug('CameraSource prepareStream', response);
 
@@ -102,6 +114,6 @@ export class CameraSource implements CameraStreamingDelegate {
     }
 
     private async getCurrentSnapshot(): Promise<Buffer> {
-      return null;
+      return fs.readFileSync(path.resolve(__dirname, './front-door.jpg'));
     }
 }

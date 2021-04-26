@@ -72,9 +72,11 @@ export class DoorbellAccessory {
     this.platform.log.debug('Set Characteristic Mute ->', value);
 
     const isMuting = value as boolean;
+
+    const deviceUrl = `http://${this.accessory.context.device.host}:${this.accessory.context.device.port}`;
     const requestUrl = isMuting
-      ? '/switch/doorbell_chime_active/turn_off'
-      : '/switch/doorbell_chime_active/turn_on';
+      ? `${deviceUrl}/switch/doorbell_chime_active/turn_off`
+      : `${deviceUrl}/switch/doorbell_chime_active/turn_on`;
 
     fetch(requestUrl, { method: 'POST' })
       .then(() => {
