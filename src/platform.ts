@@ -1,7 +1,7 @@
-import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
-
+import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic, Categories } from 'homebridge';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { DoorbellAccessory, DoorbellAccessoryContext } from './platformAccessory';
+import { CameraSource } from './cameraSource';
 
 export interface IEsphomePlatformDevice {
   name?: string;
@@ -87,6 +87,10 @@ export class EspHomeDoorbellPlatform implements DynamicPlatformPlugin {
 
       this.log.debug(`searching for existing accessory with uuid: ${uuid} in ${JSON.stringify(this.accessoriesMap)}`);
 
+      const cameraSource = !this.api.hap.CameraController
+        ? null
+        : new CameraSource(this.api, this.log);
+
       // see if an accessory with the same uuid has already been registered and restored from
       // the cached devices we stored in the `configureAccessory` method above
       const existingAccessory = this.accessoriesMap.get(uuid);
@@ -101,7 +105,7 @@ export class EspHomeDoorbellPlatform implements DynamicPlatformPlugin {
 
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
-        new DoorbellAccessory(this, existingAccessory);
+        new DoorbellAccessory(this, existingAccessory, cameraSource);
 
         // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, eg.:
         // remove platform accessories when no longer present
@@ -112,7 +116,7 @@ export class EspHomeDoorbellPlatform implements DynamicPlatformPlugin {
         this.log.info('Adding new accessory:', device.name);
 
         // create a new accessory
-        const accessory = new this.api.platformAccessory<DoorbellAccessoryContext>(device.name, uuid);
+        const accessory = new this.api.platformAccessory<DoorbellAccessoryContext>(device.name, uuid, Categories.VIDEO_DOORBELL);
 
         // store a copy of the device object in the `accessory.context`
         // the `context` property can be used to store any data about the accessory you may need
@@ -120,7 +124,7 @@ export class EspHomeDoorbellPlatform implements DynamicPlatformPlugin {
 
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
-        new DoorbellAccessory(this, accessory);
+        new DoorbellAccessory(this, accessory, cameraSource);
 
         // link the accessory to your platform
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);

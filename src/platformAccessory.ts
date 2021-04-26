@@ -2,6 +2,7 @@ import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { EspHomeDoorbellPlatform, IEsphomePlatformDevice } from './platform';
 import { EspHomeWebApi, EspHomeStateEventData } from './esphome_webapi';
 import fetch from 'node-fetch';
+import { CameraSource } from './cameraSource';
 
 export interface DoorbellAccessoryContext {
   device: IEsphomePlatformDevice;
@@ -15,12 +16,12 @@ export interface DoorbellAccessoryContext {
 export class DoorbellAccessory {
   private service: Service;
   private espHomeWebApi: EspHomeWebApi;
-
   private isMute: boolean;
 
   constructor(
     private readonly platform: EspHomeDoorbellPlatform,
     private readonly accessory: PlatformAccessory<DoorbellAccessoryContext>,
+    private readonly cameraSource: CameraSource | undefined,
   ) {
 
     this.espHomeWebApi = new EspHomeWebApi(this.platform.log, accessory.context.device.host, accessory.context.device.port!);
@@ -31,9 +32,9 @@ export class DoorbellAccessory {
       .setCharacteristic(this.platform.Characteristic.Model, 'ESP8266')
       .setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name!);
 
-    // remove ununsed information
-    this.accessory.getService(this.platform.Service.AccessoryInformation)!
-      .removeCharacteristic(new this.platform.Characteristic.SerialNumber());
+    if (this.cameraSource) {
+      this.accessory.configureController(this.cameraSource.getController());
+    }
 
     // get the Doorbell service if it exists, otherwise create a new Doorbell service
     // you can create multiple services for each accessory
