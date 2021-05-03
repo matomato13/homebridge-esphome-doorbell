@@ -68,14 +68,14 @@ export class EspHomeDoorbellPlatform implements DynamicPlatformPlugin {
     // loop over the discovered devices and register each one if it has not already been registered
     for (const device of this.config.devices!) {
 
-      if (!device.host) {
-        this.log.info(`Device [${device.name}}] has no hostname configured.`);
-        continue;
-      }
-
       if (!device.name) {
         this.log.info(`Device [${device.host}] has no name configured, using default.`);
         device.name = 'Doorbell';
+      }
+
+      if (!device.host) {
+        this.log.info(`Device [${device.name}}] has no hostname configured.`);
+        continue;
       }
 
       device.port = device.port || 80;
