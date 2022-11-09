@@ -85,7 +85,7 @@ export class EspHomeDoorbellPlatform implements DynamicPlatformPlugin {
       // number or MAC address
       const uuid = this.api.hap.uuid.generate(device.name);
 
-      this.log.debug(`searching for existing accessory with uuid: ${uuid} in ${JSON.stringify(this.accessoriesMap)}`);
+      this.log.debug(`Searching for existing accessory with uuid: ${uuid} in ${JSON.stringify(this.accessoriesMap)}`);
 
       const cameraSource = !this.api.hap.CameraController
         ? null

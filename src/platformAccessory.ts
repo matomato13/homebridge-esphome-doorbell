@@ -16,7 +16,8 @@ export interface DoorbellAccessoryContext {
 export class DoorbellAccessory {
   private service: Service;
   private espHomeWebApi: EspHomeWebApi;
-  private isMute: boolean;
+  private isMute = false;
+  private lastDoorbellActivated = new Date();
 
   constructor(
     private readonly platform: EspHomeDoorbellPlatform,
@@ -52,19 +53,35 @@ export class DoorbellAccessory {
     this.platform.log.debug(`[ES][${this.accessory.context.device.name}] State event:`, event);
 
     if (this.isDoorbellButton(event.id)) {
-      if (event.value) {
+      const isActive = event.value as boolean;
+
+      if (!isActive) {
+        return;
+      }
+
+      const minValue = new Date();
+      minValue.setSeconds(minValue.getSeconds() - 5);
+
+      if (this.lastDoorbellActivated <= minValue) {
+        this.lastDoorbellActivated = new Date();
         this.platform.log.info('Doorbell activated');
         this.service.getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
           .updateValue(this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
+      } else {
+        this.platform.log.debug(`Ignoring doorbell because of 5 seconds throttle. 
+          Last:  ${this.lastDoorbellActivated.toISOString()},
+          Value: ${minValue.toISOString()}`);
       }
     }
 
     if (this.isDoorbellChimeActiveSwitch(event.id)) {
       const isActive = event.value as boolean;
       const isMute = !isActive;
-      this.platform.log.info(`Doorbell chime active changed to ${isActive}`);
-      this.service.updateCharacteristic(this.platform.Characteristic.Mute, isMute as CharacteristicValue);
-      this.isMute = isMute;
+      if (this.isMute !== isMute) {
+        this.platform.log.info(`Doorbell chime active changed to ${isActive}`);
+        this.service.updateCharacteristic(this.platform.Characteristic.Mute, isMute as CharacteristicValue);
+        this.isMute = isMute;
+      }
     }
   }
 
